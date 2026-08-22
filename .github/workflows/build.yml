@@ -1,0 +1,29 @@
+name: Build RoImport Bridge
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Build executable
+        run: dotnet publish ./RoImportBridge-application/RoImportBridge.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ./build
+
+      - name: Upload executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: RoImportBridge-Windows
+          path: ./build/RoImportBridge.exe
