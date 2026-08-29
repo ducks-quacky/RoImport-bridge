@@ -9,7 +9,7 @@ internal sealed class BridgeServer : IDisposable
 {
     private const string Host = "127.0.0.1";
     private const int Port = 27123;
-    private const int BridgeVersion = 2;
+    private const int BridgeVersion = 3;
     private const int MaxBodySize = 32 * 1024 * 1024;
     private const string RobloxAssetUrl = "https://apis.roblox.com/assets/v1/assets";
     private const string RobloxOperationUrl = "https://apis.roblox.com/assets/v1/operations";
@@ -79,7 +79,7 @@ internal sealed class BridgeServer : IDisposable
 
         if (request.Method == "GET" && request.Path == "/health")
         {
-            await LocalHttpResponse.WriteJsonAsync(stream, 200, new { ok = true, version = BridgeVersion, assetType = "Image" }, cancellationToken);
+            await LocalHttpResponse.WriteJsonAsync(stream, 200, new { ok = true, version = BridgeVersion, assetType = "Image", pixfix = true }, cancellationToken);
             return;
         }
 
@@ -101,7 +101,7 @@ internal sealed class BridgeServer : IDisposable
             var fileSizeBytes = GetDecodedSize(payload.Data);
             var assetId = await UploadAssetAsync(payload, cancellationToken);
             logStore.Add(new UploadLogEntry(DateTimeOffset.Now, payload.FileName, assetId, payload.CreatorType, payload.CreatorId, payload.ContentType, fileSizeBytes));
-            StatusChanged?.Invoke($"Uploaded {payload.FileName} as {assetId}");
+            StatusChanged?.Invoke($"Uploaded {payload.FileName} as {assetId}{(payload.Pixfix && string.Equals(payload.ContentType, "image/png", StringComparison.OrdinalIgnoreCase) ? " [Pixfix]" : string.Empty)}");
             await LocalHttpResponse.WriteJsonAsync(stream, 200, new { assetId }, cancellationToken);
         }
         catch (Exception error)
@@ -128,6 +128,12 @@ internal sealed class BridgeServer : IDisposable
     private async Task<string> UploadAssetAsync(UploadRequest payload, CancellationToken cancellationToken)
     {
         var bytes = Convert.FromBase64String(payload.Data);
+
+        if (payload.Pixfix && string.Equals(payload.ContentType, "image/png", StringComparison.OrdinalIgnoreCase))
+        {
+            bytes = PixfixProcessor.Apply(bytes);
+        }
+
         using var form = CreateMultipartForm(payload, bytes);
         using var request = new HttpRequestMessage(HttpMethod.Post, RobloxAssetUrl) { Content = form };
         request.Headers.Add("x-api-key", payload.ApiKey);

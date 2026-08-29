@@ -13,6 +13,9 @@ internal sealed class UploadRequest
     [JsonPropertyName("creatorId")]
     public string CreatorId { get; set; } = string.Empty;
 
+    [JsonPropertyName("pixfix")]
+    public bool Pixfix { get; set; }
+
     [JsonPropertyName("fileName")]
     public string FileName { get; set; } = string.Empty;
 
