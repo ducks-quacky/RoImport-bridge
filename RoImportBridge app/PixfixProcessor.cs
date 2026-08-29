@@ -213,7 +213,7 @@ internal static class PixfixProcessor
         var raw = UnfilterScanlines(decompressed.ToArray(), width, height, bytesPerPixel);
         var rgba = new byte[checked(width * height * 4)];
 
-        for (var source = 0, pixel = 0; pixel < width * height; pixel++, source += bytesPerPixel)
+        for (int source = 0, pixel = 0; pixel < width * height; pixel++, source += bytesPerPixel)
         {
             var target = pixel * 4;
 
