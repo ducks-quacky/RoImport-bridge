@@ -21,10 +21,12 @@ internal sealed class LogsForm : Form
         logList = CreateLogList();
         copyButton = CreateButton("Copy details", 128);
         var refreshButton = CreateButton("Refresh", 90);
+        var clearButton = CreateButton("Clear logs", 100);
 
         copyButton.Enabled = false;
         copyButton.Click += (_, _) => CopySelectedDetails();
         refreshButton.Click += (_, _) => RefreshLogs();
+        clearButton.Click += (_, _) => ClearLogs();
         logList.SelectedIndexChanged += (_, _) => copyButton.Enabled = logList.SelectedItems.Count > 0;
 
         var footer = new FlowLayoutPanel
@@ -37,6 +39,7 @@ internal sealed class LogsForm : Form
         };
         footer.Controls.Add(copyButton);
         footer.Controls.Add(refreshButton);
+        footer.Controls.Add(clearButton);
 
         Controls.Add(logList);
         Controls.Add(footer);
@@ -97,6 +100,30 @@ internal sealed class LogsForm : Form
         };
         button.FlatAppearance.BorderColor = Color.FromArgb(58, 58, 64);
         return button;
+    }
+
+    private void ClearLogs()
+    {
+        if (logStore.GetEntries().Count == 0)
+        {
+            return;
+        }
+
+        var result = MessageBox.Show(
+            this,
+            "Clear all upload logs? This cannot be undone.",
+            "Clear Logs",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Warning);
+
+        if (result != DialogResult.Yes)
+        {
+            return;
+        }
+
+        logStore.Clear();
+        RefreshLogs();
+        copyButton.Enabled = false;
     }
 
     private void CopySelectedDetails()

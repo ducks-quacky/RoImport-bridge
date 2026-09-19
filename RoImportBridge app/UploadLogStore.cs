@@ -33,6 +33,15 @@ internal sealed class UploadLogStore
         }
     }
 
+    public void Clear()
+    {
+        lock (syncRoot)
+        {
+            entries.Clear();
+            SaveEntries();
+        }
+    }
+
     private List<UploadLogEntry> LoadEntries()
     {
         if (!File.Exists(logPath))
